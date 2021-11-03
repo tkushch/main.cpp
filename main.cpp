@@ -9,6 +9,8 @@ struct matrix {
 };
 
 int fill_matrix(matrix *m, int n_start, int n_end, int next_num);
+void printMatrix(matrix *m);
+int lenInt(int x);
 
 int main() {
     int n = 0;
@@ -36,12 +38,7 @@ int main() {
     fill_matrix(&my_matrix, 0, my_matrix.n, 1);
     //
     //
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            cout << my_matrix.mas[i][j] << ' ';
-        }
-        cout << endl;
-    }
+    printMatrix(&my_matrix);
 
 }
 
@@ -87,4 +84,29 @@ int fill_matrix(matrix *m, int n_start, int n_end, int next_num){
     fill_matrix(m, n_start + 2,n_end - 2, next_num);
 
     return 0;
+}
+
+void printMatrix(matrix *m){
+    int n = m -> n;
+    int **mas = m -> mas;
+    int s = lenInt(n * n);
+
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            for (int k = 0; k < (s - lenInt(mas[i][j])); k++){
+                cout << ' ';
+            }
+            cout << mas[i][j] << ' ';
+        }
+        cout << endl;
+    }
+}
+
+int lenInt(int x){
+    int len = 0;
+    while (x != 0){
+        x /= 10;
+        len++;
+    }
+    return len;
 }
