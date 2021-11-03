@@ -5,7 +5,8 @@ using namespace std;
 
 struct matrix {
     int n; //от 4 до 16
-    int **mas;
+    int m;
+    double **mas;
 };
 
 int fill_matrix(matrix *m, int n_start, int n_end, int next_num);
@@ -16,11 +17,18 @@ int lenInt(int x);
 
 void read_input_file(int *n, matrix *m);
 
+void mul(matrix *mat, int i, double k);
+
+void gsv(matrix *mat, int n, int m);
+
+void sum(matrix *mat, int i0, int i1, double k);
+
 int main() {
     int n = 0;
     matrix my_matrix;
     read_input_file(&n, &my_matrix);
     //fill_matrix(&my_matrix, 0, my_matrix.n, 1);
+    gsv(&my_matrix, my_matrix.n, my_matrix.m);
     printMatrix(&my_matrix);
 }
 
@@ -40,8 +48,9 @@ void read_input_file(int *n, matrix *m) {
         exit(EXIT_FAILURE);
     }
     m->n = *n;
-    m->mas = new int *[*n];
-    for (int i = 0; i < *n; i++) m->mas[i] = new int[*n];
+    m->m = *n;
+    m->mas = new double *[*n];
+    for (int i = 0; i < *n; i++) m->mas[i] = new double[*n];
     for (int i = 0; i < *n; i++) {
         for (int j = 0; j < *n; j++) {
             if (!(in >> (m->mas[i][j]))) {
@@ -55,7 +64,7 @@ void read_input_file(int *n, matrix *m) {
 
 int fill_matrix(matrix *m, int n_start, int n_end, int next_num) {
     int n = m->n;
-    int **mas = m->mas;
+    double **mas = m->mas;
 
     if (next_num == n * n + 1) return 0;
 
@@ -108,14 +117,16 @@ void printMatrix(matrix *m) {
     //
     //
     int n = m->n;
-    int **mas = m->mas;
-    int s = lenInt(n * n);
+    double **mas = m->mas;
+    int s = lenInt(n * n) + 2;
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            for (int k = 0; k < (s - lenInt(mas[i][j])); k++) {
-                out << ' ';
-            }
+//            for (int k = 0; k < (s - lenInt(mas[i][j])); k++) {
+//                out << ' ';
+//            }
+            out.width(s + 4);
+            out.precision(4);
             out << mas[i][j] << ' ';
         }
         out << endl;
@@ -130,4 +141,30 @@ int lenInt(int x) {
         len++;
     }
     return len;
+}
+
+void gsv(matrix *mat, int n, int m) {
+    for (int j = 0; j < n; j++) {
+        if (mat->mas[j][j] != 0) mul(mat, j, 1 / mat->mas[j][j]);
+        for (int i = 0; i < n; i++) {
+            if (i == j) continue;
+            sum(mat, i, j, -(mat->mas[i][j]));
+        }
+    }
+}
+
+
+void mul(matrix *mat, int i, double k) {
+    for (int j = 0; j < (mat->m); j++) {
+        mat->mas[i][j] *= k;
+        mat->mas[i][j] = int(mat->mas[i][j]*10000 + 0.5)/10000.0; //округление до 4 знаков
+    }
+}
+
+void sum(matrix *mat, int i0, int i1, double k) {
+    for (int j = 0; j < mat->m; j++) {
+        mat->mas[i0][j] += (mat->mas[i1][j] * k);
+        mat->mas[i0][j] = int(mat->mas[i0][j]*10000 + 0.5)/10000.0; //округление до 4 знаков
+
+    }
 }
