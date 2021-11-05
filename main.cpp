@@ -4,47 +4,66 @@
 using namespace std;
 
 struct matrix {
-    int n; //от 4 до 16
+    int n;
     int m;
+    bool ready = false;  // назначены ли n, m и выделена ли память
     double **mas;
 };
 
-int fill_matrix(matrix &m, int n_start, int n_end, int next_num);
+// пользовательские функции:
+matrix Matrix(int n, int m); // cоздание матрицы n на m (заполнение полей структуры matrix, выделение памяти)
+int fill_matrix(matrix &mat, int n_start, int n_end, int next_num); /* зополнение матрицы (n_start - первый индекс
+  [всегда 0], n_end - размерность матрицы [mat.n], next_num - с какого числа начать заполнение [всегда 1] */
+int printMatrix(matrix &mat); // вывод матрицы в файл (output.txt)
+int inverse(matrix &mat); // инвертирование матрицы mat
+int mulMatrix(matrix &a, matrix &b, matrix &c); /* умножение матриц "a" и "b", запись результата
+                                                   в матрицу "c" (её необходимо лишь объявить) */
+void read_input_file(matrix &mat); /* создание матрицы размера n * n (заполнение полей структуры matrix,
+                                      выделение памяти), где "n" и элементы матрицы берутся из файла input.txt  */
 
-void printMatrix(matrix &mat);
-
-int lenInt(int x);
-
-void read_input_file(int &n, matrix &mat);
-
+// непользовательские функции:
 void mul(matrix &mat, int i, double k);
-
 void gsv(matrix &mat);
-
 void sum(matrix &mat, int i0, int i1, double k);
+int lenInt(int x);
+void memory_for_matrix(matrix &mat);
+//
 
-void inverse(matrix &mat);
 
 int main() {
-    int n = 0;
-    matrix my_matrix;
-    read_input_file(n, my_matrix);
+    // Объявляем матрицу и заполняем ее из файла (обозначение n, m и выделение памяти встроены в функцию)
+    matrix my_matrix;  //1 матрица
+    read_input_file(my_matrix);
+
+    // Объявляем матрицу, заполняем ее поля (и выделяем память) с помощью функции Matrix(n, m)
+    matrix my_matrix1;//2 матрица
+    my_matrix1 = Matrix(my_matrix.n, my_matrix.n);
+
+    fill_matrix(my_matrix1, 0, my_matrix1.n, 1);
+
+    matrix my_matrix2;//3 матрица
+
+    mulMatrix(my_matrix, my_matrix1, my_matrix2);
+
+    printMatrix(my_matrix2);
 //    fill_matrix(my_matrix, 0, my_matrix.n, 1);
-    matrix obratnaya = my_matrix;
-    obratnaya.n = n;
-    obratnaya.m = n;
-    inverse(obratnaya);
+//    matrix obratnaya = my_matrix;
+//    obratnaya.n = n;
+//    obratnaya.m = n;
+//    inverse(obratnaya);
 //    printMatrix(my_matrix);
-    printMatrix(obratnaya);
+//    printMatrix(obratnaya);
 }
 
-void read_input_file(int &n, matrix &mat) {
+
+void read_input_file(matrix &mat) {
     ifstream in;
     in.open("C:\\Users\\lenovo\\CLionProjects\\MatrixStruct\\input.txt", ios_base::in);
     if (!in.is_open()) {
         cerr << "Error opening file" << endl;
         exit(EXIT_FAILURE);
     }
+    int n = 0;
     if (!(in >> n)) {
         cerr << "Error reading file" << endl;
         exit(EXIT_FAILURE);
@@ -53,10 +72,7 @@ void read_input_file(int &n, matrix &mat) {
         cerr << "Incorrect value" << endl;
         exit(EXIT_FAILURE);
     }
-    mat.n = n;
-    mat.m = n;
-    mat.mas = new double *[n];
-    for (int i = 0; i < n; i++) mat.mas[i] = new double[n];
+    mat = Matrix(n, n);
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (!(in >> (mat.mas[i][j]))) {
@@ -69,6 +85,8 @@ void read_input_file(int &n, matrix &mat) {
 }
 
 int fill_matrix(matrix &mat, int n_start, int n_end, int next_num) {
+    if (!mat.ready) return 1; //проверка
+
     int n = mat.n;
     double **mas = mat.mas;
 
@@ -111,7 +129,9 @@ int fill_matrix(matrix &mat, int n_start, int n_end, int next_num) {
     return 0;
 }
 
-void printMatrix(matrix &mat) {
+int printMatrix(matrix &mat) {
+    if (!mat.ready) return 1;
+
     ofstream out;
     out.open("C:\\Users\\lenovo\\CLionProjects\\MatrixStruct\\output.txt", ios_base::out);
     if (!out.is_open()) {
@@ -130,13 +150,14 @@ void printMatrix(matrix &mat) {
 //            for (int k = 0; k < (s - lenInt(mas[i][j])); k++) {
 //                out << ' ';
 //            }
-            out.width(s + 2);
-            out.precision(2);
+            out.width(s + 4);
+            out.precision(4);
             out << mas[i][j] << ' ';
         }
         out << endl;
     }
     out.close();
+    return 0;
 }
 
 int lenInt(int x) {
@@ -171,7 +192,9 @@ void sum(matrix &mat, int i0, int i1, double k) {
     }
 }
 
-void inverse(matrix &mat) {
+int inverse(matrix &mat) {
+    if (!mat.ready) return 1;
+
     double **nmas = new double *[mat.n];
     for (int i = 0; i < mat.n; i++) {
         nmas[i] = new double[mat.n * 2];
@@ -192,12 +215,42 @@ void inverse(matrix &mat) {
     nmat.mas = nmas;
     gsv(nmat);
     for (int i = 0; i < mat.n; i++) {
-        for (int j = 0; j < mat.n; j++){
-            mat.mas[i][j] = nmat.mas[i][j+mat.n];
+        for (int j = 0; j < mat.n; j++) {
+            mat.mas[i][j] = nmat.mas[i][j + mat.n];
         }
     }
     for (int i = 0; i < mat.n; i++) {
         delete[] nmas[i];
     }
     delete[] nmas;
+    return 0;
+}
+
+int mulMatrix(matrix &a, matrix &b, matrix &c) {
+    if (a.m != b.n) return 1; // Нельзя перемножить
+    c = Matrix(a.n, b.m);
+
+    for (int i = 0; i < a.n; i++) {
+        for (int j = 0; j < b.m; j++) {
+            c.mas[i][j] = 0;
+            for (int n = 0; n < a.m; n++) {
+                c.mas[i][j] += (a.mas[i][n] * b.mas[n][j]);
+            }
+        }
+    }
+
+}
+
+void memory_for_matrix(matrix &mat) {
+    mat.mas = new double *[mat.n];
+    for (int i = 0; i < mat.n; i++) mat.mas[i] = new double[mat.m];
+}
+
+matrix Matrix(int n, int m) {
+    matrix mat;
+    mat.n = n;
+    mat.m = m;
+    memory_for_matrix(mat);
+    mat.ready = true;
+    return mat;
 }
